@@ -1,0 +1,135 @@
+\documentclass[12pt]{article}
+\usepackage{bbold}
+\usepackage{semantic}
+\usepackage{mathtools}
+\usepackage{syntax}
+
+
+\renewcommand{\syntleft}{\normalfont\itshape}
+\renewcommand{\syntright}{}
+
+\begin{document}
+
+\section{Syntactic Domains}
+\begin{align*}
+  A &:: Alter \\
+  C &:: Column \\
+  D &:: Declaration \\
+  Dr &:: Drop \\
+  I &:: Identifier \\
+  P &:: Program \\
+  Ta &:: Table \\
+  Ty &:: Type
+\end{align*}
+
+\section{Production Rules}
+\begin{grammar}
+  <Program> ::= <Declaration>;
+
+  <Declaration> ::= <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
+
+  <Create> ::= create table <Identifier> ( <Column> )
+
+  <Drop> ::= drop table <Identifier>
+
+  <Column> ::= <Column>, <Column> | <Identifier> <Type>
+
+  <Alter> ::= alter table <Identifier> add <Identifier> <Type>
+           \alt alter table <Identifier> drop <Identifier>
+
+  <Type> ::= integer | boolean
+\end{grammar}
+
+\section{Semantic Domains}
+\begin{align*}
+  Schema &:: Identifier -> Table \\
+  Tables &:: Identifier -> Column \\
+  Column &:: Integer + Boolean
+\end{align*}
+
+\section{Semantic Functions}
+\begin{align*}
+  schema &:: Schema \\
+  schema &:: \lambda i.\bot \\
+  schema_{\Delta} &:: Identifier -> Table -> Schema -> Schema \\
+  schema_{\Delta} &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
+  \\
+  table &:: Table \\
+  table &:: \lambda i.\bot \\
+  table_{\Delta} &:: Identifier -> Type -> Table -> Table \\
+  table_{\Delta} &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
+\end{align*}
+
+\section{Valuation Functions}
+
+\begin{alignat*}{2}
+  &\compsymbol :: Declaration -> Schema -> S&&chema \\
+  &\comp{D;}{}s &&= \comp{D}{}s \\
+  &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
+  &\comp{create table I ( C )}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
+  &\comp{C1, C2}{}t &&= \lambda t.\comp{C2}{}\ (\comp{C1}{}\ t) \\
+  &\comp{I Ty}{}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \mathtt{Ty}\ t \\
+  &\comp{drop table I}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ \bot\ s \\
+  &\comp{alter table I1 add I2 Ty}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I1}\ (table_{\Delta}\ \mathtt{I2}\ (\comp{\mathtt{I}2 Ty}{}\ (s\ \mathtt{I1}))\ s\\
+  &\comp{alter table I1 drop I2}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I1}\ (table_{\Delta}\ \mathtt{I2}\ \bot\ (\mathtt{s}\ \mathtt{I1}))\ s
+\end{alignat*}
+
+\newpage
+
+\section{Syntactic Domains}
+\begin{align*}
+  C &:: Column \\
+  D &:: Declaration \\
+  I &:: Identifier \\
+  P &:: Program \\
+  Ta &:: Table \\
+  Ty &:: Type
+\end{align*}
+
+\section{Production Rules}
+\begin{grammar}
+  <Program> ::= <Declaration>;
+
+  <Declaration> ::= <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
+
+  <Create> ::= create table <Identifier> ( <Column> )
+
+  <Column> ::= <Column>, <Column> | <Identifier> <Type>
+
+  <Type> ::= integer | boolean
+\end{grammar}
+
+\section{Semantic Domains}
+\begin{align*}
+  Schema &:: Identifier -> Table \\
+  Tables &:: Identifier -> Column \\
+  Column &:: Integer + Boolean
+\end{align*}
+
+\section{Semantic Functions}
+\begin{align*}
+  schema &:: Schema \\
+  schema &:: \lambda i.\bot \\
+  schema_{\Delta} &:: Identifier -> Table -> Schema -> Schema \\
+  schema_{\Delta} &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
+  \\
+  table &:: Table \\
+  table &:: \lambda i.\bot \\
+  table_{\Delta} &:: Identifier -> Type -> Table -> Table \\
+  table_{\Delta} &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
+\end{align*}
+
+\section{Valuation Functions}
+
+\begin{alignat*}{2}
+  &\compsymbol :: Declaration -> Schema -> S&&chema \\
+  &\comp{D;}{}s &&= \comp{D}{}s \\
+  &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
+  &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ \bot\ s \\
+  &\comp{create table I ( C )}{}^{+}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
+  &\comp{C1, C2}{}t &&= \lambda t.\comp{C2}{}\ (\comp{C1}{}\ t) \\
+  &\comp{I Ty}{}^{-}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \bot\ t \\
+  &\comp{I Ty}{}^{+}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \mathtt{Ty}\ t \\
+\end{alignat*}
+
+\end{document}

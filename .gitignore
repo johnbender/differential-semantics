@@ -1,0 +1,10 @@
+*.aux
+auto
+*.dvi
+*.log
+*.pdf
+*.svg
+*.out
+*_*
+*~
+*#
