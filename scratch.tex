@@ -44,7 +44,7 @@
 \begin{align*}
   Schema &:: Identifier -> Table \\
   Tables &:: Identifier -> Column \\
-  Column &:: Integer + Boolean
+  Type &:: Integer + Boolean
 \end{align*}
 
 \section{Semantic Functions}
@@ -102,8 +102,8 @@
 \section{Semantic Domains}
 \begin{align*}
   Schema &:: Identifier -> Table \\
-  Tables &:: Identifier -> Column \\
-  Column &:: Integer + Boolean
+  Tables &:: Identifier -> Type \\
+  Type &:: Integer + Boolean
 \end{align*}
 
 \section{Semantic Functions}
@@ -122,14 +122,17 @@
 \section{Valuation Functions}
 
 \begin{alignat*}{2}
-  &\compsymbol :: Declaration -> Schema -> S&&chema \\
-  &\comp{D;}{}s &&= \comp{D}{}s \\
-  &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
+  &\delta \in \{-, +, \eta \} &&\\
+  &\compsymbol :: Differential -> Schema &&-> Schema \\
+  &\comp{D;}{}^{\delta}s &&= \comp{D}{}^{\delta}\ s \\
+  &\comp{D1;D2}{}^{\delta}s &&= \lambda s.\comp{D2}{}^{\delta}\ (\comp{D1}{}^{\delta}\ s) \\
   &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ \bot\ s \\
   &\comp{create table I ( C )}{}^{+}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
-  &\comp{C1, C2}{}t &&= \lambda t.\comp{C2}{}\ (\comp{C1}{}\ t) \\
+  &\comp{create table I ( C )}{}{}^{\eta}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{} (s\ \mathtt{I}))\ s\\
+  &\comp{C1, C2}{}^{\delta}t &&= \lambda t.\comp{C2}{}^{\delta}\ (\comp{C1}{}^{\delta}\ t) \\
   &\comp{I Ty}{}^{-}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \bot\ t \\
   &\comp{I Ty}{}^{+}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \mathtt{Ty}\ t \\
+  &\comp{I Ty}{}^{\eta}t &&= \lambda t. t \\
 \end{alignat*}
 
 \end{document}
