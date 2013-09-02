@@ -10,6 +10,53 @@
 
 \begin{document}
 
+\section{Abstract}
+
+The criteria by which a programming language is judged ``declarative'' are many and varied. [\textbf{TODO} Examples]. Even the ``most declarative'' among them (e.g. SQL/SQL DDL) includes decidedly non-declarative syntax and semantics to provide state transition mechanisms.
+
+Here, we develop an extension to traditional denotational semantics that gives meaning to \emph{changes} in declarative syntax. We use that extension to simplify or eliminate unnecessary features in a semantics for an object language, the Data Definition Language subset of SQL 2010 standard. As a result we arrive at a new and principled definition of what it means for a language to be \emph{purely declarative}.
+
+\begin{description}
+  \item[state transition mechanism] This description of the way that declarative languages break down has to be though through carefully.
+  \item[eliminate unnecessary features] Show equivalence?
+  \item[purely declarative] See section \ref{sec:theorems}
+\end{description}
+
+\section{Candidate Theorems}
+\label{sec:theorems}
+
+\begin{description}
+  \item[Syntax] A well-defined declarative semantics means there is always a direct mapping between syntax and system state.
+
+    Note that \verb|alter| or \verb|drop| statements followed by more of the same for the same target object and properties will violate this theorem.
+
+    This seems strict. Partial definitions may be more difficult to implement or prove but can still provide a lot of value.
+
+    \vspace{0.5cm}
+
+  \item[Syntax] A well-defined declarative semantics denotes mappings between versions of system state.
+
+    Is change of relations a part of relationale algebra? This theorem highlights that whatever the denotations are they must be able to map states to accomodate the changes in syntax.
+
+    Existing DDL appears to satisfy this theorem. Alter and drop definitely map system states.
+
+    \vspace{0.5cm}
+
+  \item[Syntax] A well-defined declarative syntax always maps directly to the resulting system state.
+
+    This follows the same line of reasoning as the other syntax theorem: i.e., the declaration should dictate system state. The wording is focused on allowing snippets of syntax within a possibly larger grammar to satisfy the theorem.
+
+    This sounds bi-directional, but that depends on the system. In reality the syntax should determine the system state at interpretation time. It might be that other processes alter the state after that. Requires examining hot code loading a bit more.
+
+    Are things like the implementation of finding the difference between versions of the syntax unimportant for the theorem?
+
+    \vspace{0.5cm}
+
+  \item[State] A well-defined declarative semantics for some syntax means there is always a mapping between the existing and desired system states derived from it.
+
+    Knowing what system state is defined by a piece of syntax is tough. Stack state should be easy enough to reason about in pure languages.
+\end{description}
+
 \section{Syntactic Domains}
 \begin{align*}
   A &:: Alter \\
@@ -51,13 +98,13 @@
 \begin{align*}
   schema &:: Schema \\
   schema &:: \lambda i.\bot \\
-  schema_{\Delta} &:: Identifier -> Table -> Schema -> Schema \\
-  schema_{\Delta} &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
+  schemaChange &:: Identifier -> Table -> Schema -> Schema \\
+  schemaChange &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
   \\
   table &:: Table \\
   table &:: \lambda i.\bot \\
-  table_{\Delta} &:: Identifier -> Type -> Table -> Table \\
-  table_{\Delta} &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
+  tableChange &:: Identifier -> Type -> Table -> Table \\
+  tableChange &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
 \end{align*}
 
 \section{Valuation Functions}
@@ -66,12 +113,12 @@
   &\compsymbol :: Declaration -> Schema -> S&&chema \\
   &\comp{D;}{}s &&= \comp{D}{}s \\
   &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
-  &\comp{create table I ( C )}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
+  &\comp{create table I ( C )}{}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
   &\comp{C1, C2}{}t &&= \lambda t.\comp{C2}{}\ (\comp{C1}{}\ t) \\
-  &\comp{I Ty}{}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \mathtt{Ty}\ t \\
-  &\comp{drop table I}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ \bot\ s \\
-  &\comp{alter table I1 add I2 Ty}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I1}\ (table_{\Delta}\ \mathtt{I2}\ (\comp{\mathtt{I}2 Ty}{}\ (s\ \mathtt{I1}))\ s\\
-  &\comp{alter table I1 drop I2}{}s &&= \lambda s. schema_{\Delta}\ \mathtt{I1}\ (table_{\Delta}\ \mathtt{I2}\ \bot\ (\mathtt{s}\ \mathtt{I1}))\ s
+  &\comp{I Ty}{}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
+  &\comp{drop table I}{}s &&= \lambda s. schemaChange\ \mathtt{I}\ \bot\ s \\
+  &\comp{alter table I1 add I2 Ty}{}s &&= \lambda s. schemaChange\ \mathtt{I1}\ (tableChange\ \mathtt{I2}\ (\comp{\mathtt{I}2 Ty}{}\ (s\ \mathtt{I1}))\ s\\
+  &\comp{alter table I1 drop I2}{}s &&= \lambda s. schemaChange\ \mathtt{I1}\ (tableChange\ \mathtt{I2}\ \bot\ (\mathtt{s}\ \mathtt{I1}))\ s
 \end{alignat*}
 
 \newpage
@@ -110,13 +157,13 @@
 \begin{align*}
   schema &:: Schema \\
   schema &:: \lambda i.\bot \\
-  schema_{\Delta} &:: Identifier -> Table -> Schema -> Schema \\
-  schema_{\Delta} &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
+  schemaChange &:: Identifier -> Table -> Schema -> Schema \\
+  schemaChange &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
   \\
   table &:: Table \\
   table &:: \lambda i.\bot \\
-  table_{\Delta} &:: Identifier -> Type -> Table -> Table \\
-  table_{\Delta} &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
+  tableChange &:: Identifier -> Type -> Table -> Table \\
+  tableChange &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
 \end{align*}
 
 \section{Valuation Functions}
@@ -126,12 +173,12 @@
   &\compsymbol :: Differential -> Schema &&-> Schema \\
   &\comp{D;}{}^{\delta}s &&= \comp{D}{}^{\delta}\ s \\
   &\comp{D1;D2}{}^{\delta}s &&= \lambda s.\comp{D2}{}^{\delta}\ (\comp{D1}{}^{\delta}\ s) \\
-  &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ \bot\ s \\
-  &\comp{create table I ( C )}{}^{+}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
-  &\comp{create table I ( C )}{}{}^{\eta}s &&= \lambda s. schema_{\Delta}\ \mathtt{I}\ (\comp{C}{} (s\ \mathtt{I}))\ s\\
+  &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schemaChange\ \mathtt{I}\ \bot\ s \\
+  &\comp{create table I ( C )}{}^{+}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
+  &\comp{create table I ( C )}{}{}^{\eta}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{} (s\ \mathtt{I}))\ s\\
   &\comp{C1, C2}{}^{\delta}t &&= \lambda t.\comp{C2}{}^{\delta}\ (\comp{C1}{}^{\delta}\ t) \\
-  &\comp{I Ty}{}^{-}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \bot\ t \\
-  &\comp{I Ty}{}^{+}t &&= \lambda t.table_{\Delta}\ \mathtt{I}\ \mathtt{Ty}\ t \\
+  &\comp{I Ty}{}^{-}t &&= \lambda t.tableChange\ \mathtt{I}\ \bot\ t \\
+  &\comp{I Ty}{}^{+}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
   &\comp{I Ty}{}^{\eta}t &&= \lambda t. t \\
 \end{alignat*}
 
