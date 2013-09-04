@@ -1,7 +1,14 @@
+build(){
+	pdflatex -interaction=nonstopmode $1
+	bibtex $2
+	pdflatex -interaction=nonstopmode $1
+	pdflatex -interaction=nonstopmode $1
+}
+
 # build once by default
-pdflatex -interaction=nonstopmode $1
+build scratch.tex scratch.aux
 
 # watch for alterations
-while inotifywait $1 ; do
-  pdflatex -interaction=nonstopmode $1
+while inotifywait scratch.tex; do
+	build scratch.tex scratch.aux
 done

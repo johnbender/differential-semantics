@@ -4,7 +4,6 @@
 \usepackage{mathtools}
 \usepackage{syntax}
 
-
 \renewcommand{\syntleft}{\normalfont\itshape}
 \renewcommand{\syntright}{}
 
@@ -12,21 +11,31 @@
 
 \section{Abstract}
 
-The criteria by which a programming language is judged ``declarative'' are many and varied. [\textbf{TODO} Examples]. Even the ``most declarative'' among them (e.g. SQL/SQL DDL) includes decidedly non-declarative syntax and semantics to provide state transition mechanisms.
+Roy and Haridi \cite{RoyH2004} divide declarative languages in to two major groups based on expressive power: descriptive and programmable. In particular, descriptive declarative languages are characterized by the their limited expressive power. Indeed, languages that might otherwise be purely descriptive (e.g. SQL DDL) must be augmented with programmable declarative elements for anything beyond the initial system state.
 
-Here, we develop an extension to traditional denotational semantics that gives meaning to \emph{changes} in declarative syntax. We use that extension to simplify or eliminate unnecessary features in a semantics for an object language, the Data Definition Language subset of SQL 2010 standard. As a result we arrive at a new and principled definition of what it means for a language to be \emph{purely declarative}.
+We believe that the purely descriptive form is sufficiently expressive in many cases given additional information about syntactic change that is readily available in modern programming environments. To leverage that information, we develop an extension to traditional denotational semantics that supports meaning for changes in syntax. With that extension we construct a denotational semantics for standardized SQL DDL and show that it is possible to eliminate several of its non-descriptive features. Finally, we construct an adapter for an existing implementation.
 
 \begin{description}
-  \item[state transition mechanism] This description of the way that declarative languages break down has to be though through carefully.
   \item[eliminate unnecessary features] Show equivalence?
-  \item[purely declarative] See section \ref{sec:theorems}
 \end{description}
 
 \section{Candidate Theorems}
 \label{sec:theorems}
 
+Order of preference:
+
 \begin{description}
-  \item[Syntax] A well-defined declarative semantics means there is always a direct mapping between syntax and system state.
+  \item[Syntax] A well-defined descriptive declarative syntax can always be mapped directly to the desired system state.
+
+    This follows the same line of reasoning as the other syntax theorem: i.e., the declaration should dictate system state. The wording is focused on allowing snippets of syntax within a possibly larger grammar to satisfy the theorem.
+
+    This sounds bi-directional, but that depends on the system. The syntax should determine the system state at interpretation time. It might be that other processes alter the state after that.
+
+    Are things like the implementation of finding the difference between versions of the syntax unimportant for the theorem?
+
+    \vspace{0.5cm}
+
+  \item[Syntax] A well-defined descriptive declarative semantics means there is always a clear mapping between syntax and system state.
 
     Note that \verb|alter| or \verb|drop| statements followed by more of the same for the same target object and properties will violate this theorem.
 
@@ -34,83 +43,67 @@ Here, we develop an extension to traditional denotational semantics that gives m
 
     \vspace{0.5cm}
 
-  \item[Syntax] A well-defined declarative semantics denotes mappings between versions of system state.
+  \item[Syntax] A well-defined descriptive declarative semantics denotes mappings between versions of system state.
 
     Is change of relations a part of relationale algebra? This theorem highlights that whatever the denotations are they must be able to map states to accomodate the changes in syntax.
 
     Existing DDL appears to satisfy this theorem. Alter and drop definitely map system states.
-
-    \vspace{0.5cm}
-
-  \item[Syntax] A well-defined declarative syntax always maps directly to the resulting system state.
-
-    This follows the same line of reasoning as the other syntax theorem: i.e., the declaration should dictate system state. The wording is focused on allowing snippets of syntax within a possibly larger grammar to satisfy the theorem.
-
-    This sounds bi-directional, but that depends on the system. In reality the syntax should determine the system state at interpretation time. It might be that other processes alter the state after that. Requires examining hot code loading a bit more.
-
-    Are things like the implementation of finding the difference between versions of the syntax unimportant for the theorem?
-
-    \vspace{0.5cm}
-
-  \item[State] A well-defined declarative semantics for some syntax means there is always a mapping between the existing and desired system states derived from it.
-
-    Knowing what system state is defined by a piece of syntax is tough. Stack state should be easy enough to reason about in pure languages.
 \end{description}
 
 \section{Syntactic Domains}
 \begin{align*}
-  A &:: Alter \\
-  C &:: Column \\
-  D &:: Declaration \\
-  Dr &:: Drop \\
-  I &:: Identifier \\
-  P &:: Program \\
-  Ta &:: Table \\
-  Ty &:: Type
+  A &: Alter \\
+  C &: Column \\
+  D &: Declaration \\
+  Dr &: Drop \\
+  I &: Identifier \\
+  P &: Program \\
+  Ta &: Table \\
+  Ty &: Type
 \end{align*}
 
 \section{Production Rules}
 \begin{grammar}
-  <Program> ::= <Declaration>;
+  <Program> := <Declaration>;
 
-  <Declaration> ::= <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
+  <Declaration> := <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
 
-  <Create> ::= create table <Identifier> ( <Column> )
+  <Create> := create table <Identifier> ( <Column> )
 
-  <Drop> ::= drop table <Identifier>
+  <Drop> := drop table <Identifier>
 
-  <Column> ::= <Column>, <Column> | <Identifier> <Type>
+  <Column> := <Column>, <Column> | <Identifier> <Type>
 
-  <Alter> ::= alter table <Identifier> add <Identifier> <Type>
+  <Alter> := alter table <Identifier> add <Identifier> <Type>
            \alt alter table <Identifier> drop <Identifier>
 
-  <Type> ::= integer | boolean
+  <Type> := integer | boolean
 \end{grammar}
 
 \section{Semantic Domains}
 \begin{align*}
-  Schema &:: Identifier -> Table \\
-  Tables &:: Identifier -> Column \\
-  Type &:: Integer + Boolean
+  Schema &: Identifier -> Table \\
+  Tables &: Identifier -> Column \\
+  Type &: Integer + Boolean
 \end{align*}
 
 \section{Semantic Functions}
 \begin{align*}
-  schema &:: Schema \\
-  schema &:: \lambda i.\bot \\
-  schemaChange &:: Identifier -> Table -> Schema -> Schema \\
+  schema &: Schema \\
+  schema &: \lambda i.\bot \\
+  schemaChange &: Identifier -> Table -> Schema -> Schema \\
   schemaChange &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
   \\
-  table &:: Table \\
-  table &:: \lambda i.\bot \\
-  tableChange &:: Identifier -> Type -> Table -> Table \\
+  table &: Table \\
+  table &: \lambda i.\bot \\
+  tableChange &: Identifier -> Type -> Table -> Table \\
   tableChange &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
 \end{align*}
 
 \section{Valuation Functions}
 
 \begin{alignat*}{2}
-  &\compsymbol :: Declaration -> Schema -> S&&chema \\
+  &\compsymbol : Declaration -> Schema -> S&&chema \\
   &\comp{D;}{}s &&= \comp{D}{}s \\
   &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
   &\comp{create table I ( C )}{}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
@@ -125,44 +118,44 @@ Here, we develop an extension to traditional denotational semantics that gives m
 
 \section{Syntactic Domains}
 \begin{align*}
-  C &:: Column \\
-  D &:: Declaration \\
-  I &:: Identifier \\
-  P &:: Program \\
-  Ta &:: Table \\
-  Ty &:: Type
+  C &: Column \\
+  D &: Declaration \\
+  I &: Identifier \\
+  P &: Program \\
+  Ta &: Table \\
+  Ty &: Type
 \end{align*}
 
 \section{Production Rules}
 \begin{grammar}
-  <Program> ::= <Declaration>;
+  <Program> := <Declaration>;
 
-  <Declaration> ::= <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
+  <Declaration> := <Declaration>; <Declaration> | <Create>
 
-  <Create> ::= create table <Identifier> ( <Column> )
+  <Create> := create table <Identifier> ( <Column> )
 
-  <Column> ::= <Column>, <Column> | <Identifier> <Type>
+  <Column> := <Column>, <Column> | <Identifier> <Type>
 
-  <Type> ::= integer | boolean
+  <Type> := integer | boolean
 \end{grammar}
 
 \section{Semantic Domains}
 \begin{align*}
-  Schema &:: Identifier -> Table \\
-  Tables &:: Identifier -> Type \\
-  Type &:: Integer + Boolean
+  Schema &: Identifier -> Table \\
+  Tables &: Identifier -> Type \\
+  Type &: Integer + Boolean
 \end{align*}
 
 \section{Semantic Functions}
 \begin{align*}
-  schema &:: Schema \\
-  schema &:: \lambda i.\bot \\
-  schemaChange &:: Identifier -> Table -> Schema -> Schema \\
+  schema &: Schema \\
+  schema &: \lambda i.\bot \\
+  schemaChange &: Identifier -> Table -> Schema -> Schema \\
   schemaChange &= \lambda i. \lambda t. \lambda s. [ i \mapsto t ]s \\
   \\
-  table &:: Table \\
-  table &:: \lambda i.\bot \\
-  tableChange &:: Identifier -> Type -> Table -> Table \\
+  table &: Table \\
+  table &: \lambda i.\bot \\
+  tableChange &: Identifier -> Type -> Table -> Table \\
   tableChange &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
 \end{align*}
 
@@ -170,7 +163,7 @@ Here, we develop an extension to traditional denotational semantics that gives m
 
 \begin{alignat*}{2}
   &\delta \in \{-, +, \eta \} &&\\
-  &\compsymbol :: Differential -> Schema &&-> Schema \\
+  &\compsymbol : Differential -> Schema &&-> Schema \\
   &\comp{D;}{}^{\delta}s &&= \comp{D}{}^{\delta}\ s \\
   &\comp{D1;D2}{}^{\delta}s &&= \lambda s.\comp{D2}{}^{\delta}\ (\comp{D1}{}^{\delta}\ s) \\
   &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schemaChange\ \mathtt{I}\ \bot\ s \\
@@ -181,5 +174,8 @@ Here, we develop an extension to traditional denotational semantics that gives m
   &\comp{I Ty}{}^{+}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
   &\comp{I Ty}{}^{\eta}t &&= \lambda t. t \\
 \end{alignat*}
+
+\bibliographystyle{plain}
+\bibliography{ctm}
 
 \end{document}

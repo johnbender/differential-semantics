@@ -5,6 +5,8 @@ auto
 *.pdf
 *.svg
 *.out
+*.bbl
+*.blg
 *_*
 *~
 *#
