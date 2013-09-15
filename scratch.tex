@@ -7,11 +7,15 @@
 \renewcommand{\syntleft}{\normalfont\itshape}
 \renewcommand{\syntright}{}
 
+\newcommand{\cmp}[2]{
+  \mathcal{#1}|[\mathtt{#2}|]
+}
+
 \begin{document}
 
 \section{Abstract}
 
-Roy and Haridi \cite{RoyH2004} divide declarative languages in to two major groups based on expressive power: descriptive and programmable. In particular, descriptive declarative languages are characterized by the their limited expressive power. Indeed, languages that might otherwise be purely descriptive (e.g. SQL DDL) must be augmented with programmable declarative elements for anything beyond the initial system state.
+Roy and Haridi \cite{RoyH2004} divide declarative languages in to two major groups based on expressive power: descriptive and programmable. In particular, descriptive declarative languages are characterized by the their limited expressive power. Indeed, languages that might otherwise be purely descriptive (e.g. SQL DDL) must be augmented with programmable declarative elements to describe anything beyond the initial system state.
 
 We believe that the purely descriptive form is sufficiently expressive in many cases given additional information about syntactic change that is readily available in modern programming environments. To leverage that information, we develop an extension to traditional denotational semantics that supports meaning for changes in syntax. With that extension we construct a denotational semantics for standardized SQL DDL and show that it is possible to eliminate several of its non-descriptive features. Finally, we construct an adapter for an existing implementation.
 
@@ -173,6 +177,64 @@ Order of preference:
   &\comp{I Ty}{}^{-}t &&= \lambda t.tableChange\ \mathtt{I}\ \bot\ t \\
   &\comp{I Ty}{}^{+}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
   &\comp{I Ty}{}^{\eta}t &&= \lambda t. t \\
+\end{alignat*}
+
+\section{Syntactic Domains}
+\begin{align*}
+  C &: Column \\
+  D &: Declaration \\
+  I &: Identifier \\
+  P &: Program \\
+  Ta &: Table \\
+  Ty &: Type
+\end{align*}
+
+\section{Production Rules}
+\begin{grammar}
+  <Program> := <Declaration>;
+
+  <Declaration> := <Declaration>; <Declaration> | <Create>
+
+  <Create> := create table <Identifier> ( <Column> )
+
+  <Column> := <Column>, <Column> | <Identifier> <Type>
+
+  <Type> := integer | boolean
+\end{grammar}
+
+\section{Semantic Domains}
+\begin{align*}
+  Schema &: S \\
+  Relation &: R \\
+\end{align*}
+
+\section{Semantic Functions}
+\begin{align*}
+  schema &: Schema \\
+  schema &= \langle \rangle \\
+   \\
+  relation &: Identifier -> Tuple -> Relation \\
+  relation&\ I\ = I()
+\end{align*}
+
+\section{Valuation Functions}
+
+TODO how is \verb|create ; create| or \verb| drop; drop| for the same identifier handled if there should be a direct mapping
+
+\begin{alignat*}{2}
+  &\delta \in \{-, +, \eta \} &&\\
+  &\mathcal{S} : Differential -> Schema -> &&Schema \\
+  &\cmp{S}{D;}^{\delta}s &&= \cmp{S}{D}^{\delta}\ s \\
+  &\cmp{S}{D1;D2}^{\delta}s &&= \cmp{S}{D2}^{\delta}\ (\cmp{S}{D1}^{\delta}\ s) \\
+  &\cmp{S}{create table I ( C )}^{-}s &&= s \backslash \langle r_{\mathtt{I}}\rangle \\
+  &\cmp{S}{create table I ( C )}^{+}s &&= s \cup \langle \cmp{R}{C}\ (relation\ \mathtt{I})\rangle \\
+  &\cmp{S}{create table I ( C )}^{\eta}s &&= s \backslash \langle r_{\mathtt{I}}\rangle \cup \langle \cmp{R}{C}^{\eta}\ r_{\mathtt{I}}\rangle \\
+  \\
+  &\marhcal{R} : Differential -> Relation -> && Relation \\
+  &\cmp{R}{C1, C2}{}^{\delra}r &&= \cmp{R}{C2}^{\delta}\ (\cmp{R}{C1}^{\delta}\ r) \\
+  &\cmp{R}{I Ry}^{-}r &&= \lambda r.rableChange\ \marhrr{I}\ \bor\ r \\
+  &\cmp{R}{I Ry}^{+}r &&= \lambda r.rableChange\ \marhrr{I}\ \marhrr{Ry}\ r \\
+  &\cmp{R}{I Ry}^{\era}r &&= \lambda r. r \\
 \end{alignat*}
 
 \bibliographystyle{plain}
