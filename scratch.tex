@@ -3,12 +3,17 @@
 \usepackage{semantic}
 \usepackage{mathtools}
 \usepackage{syntax}
+\usepackage{xstring}
 
 \renewcommand{\syntleft}{\normalfont\itshape}
 \renewcommand{\syntright}{}
 
 \newcommand{\cmp}[2]{
-  \mathcal{#1}|[\mathtt{#2}|]
+  \mathcal{#1}|[ \mathtt{ \StrSubstitute{#2}{ }{\ } } |]
+}
+
+\newcommand{\syn}[1]{
+  \synt{\textbf{#1}}
 }
 
 \begin{document}
@@ -72,16 +77,16 @@ Order of preference:
 
   <Declaration> := <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
 
-  <Create> := create table <Identifier> ( <Column> )
+  <Create> := \lit*{create table} <Identifier> ( <Column> )
 
-  <Drop> := drop table <Identifier>
+  <Drop> := \lit*{drop table} <Identifier>
 
   <Column> := <Column>, <Column> | <Identifier> <Type>
 
-  <Alter> := alter table <Identifier> add <Identifier> <Type>
-           \alt alter table <Identifier> drop <Identifier>
+  <Alter> := \lit*{alter table} <Identifier> \lit*{add} <Identifier> <Type>
+           \alt \lit*{alter table} <Identifier> \lit*{drop} <Identifier>
 
-  <Type> := integer | boolean
+  <Type> := \lit*{integer} | \lit*{boolean}
 \end{grammar}
 
 \section{Semantic Domains}
@@ -107,15 +112,17 @@ Order of preference:
 \section{Valuation Functions}
 
 \begin{alignat*}{2}
-  &\compsymbol : Declaration -> Schema -> S&&chema \\
-  &\comp{D;}{}s &&= \comp{D}{}s \\
-  &\comp{D1;D2}{}s &&= \lambda s.\comp{D2}{}\ (\comp{D1}{}\ s) \\
-  &\comp{create table I ( C )}{}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
-  &\comp{C1, C2}{}t &&= \lambda t.\comp{C2}{}\ (\comp{C1}{}\ t) \\
-  &\comp{I Ty}{}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
-  &\comp{drop table I}{}s &&= \lambda s. schemaChange\ \mathtt{I}\ \bot\ s \\
-  &\comp{alter table I1 add I2 Ty}{}s &&= \lambda s. schemaChange\ \mathtt{I1}\ (tableChange\ \mathtt{I2}\ (\comp{\mathtt{I}2 Ty}{}\ (s\ \mathtt{I1}))\ s\\
-  &\comp{alter table I1 drop I2}{}s &&= \lambda s. schemaChange\ \mathtt{I1}\ (tableChange\ \mathtt{I2}\ \bot\ (\mathtt{s}\ \mathtt{I1}))\ s
+  &\mathcal{S} : Declaration -> Schema -> Sch&&ema \\
+  &\cmp{S}{D;}s &&= \cmp{S}{D}s \\
+  &\cmp{S}{D1;D2}s &&= \cmp{S}{D2}\ (\cmp{S}{D1}\ s) \\
+  &\cmp{S}{create table I ( C )} s &&= schemaChange\ \mathtt{I}\ (\cmp{T}{C}\ table)\ s \\
+  &\cmp{S}{drop table I}s &&= schemaChange\ \mathtt{I}\ \bot\ s \\
+  &\cmp{S}{alter table I1 add I2 Ty}s &&= schemaChange\ \mathtt{I1}\ (\cmp{T}{\mathtt{I2} Ty}\ (s\ \mathtt{I1}))\ s\\
+  &\cmp{S}{alter table I1 drop I2}s &&= schemaChange\ \mathtt{I1}\ (tableChange\ \mathtt{I2}\ \bot\ (\mathtt{s}\ \mathtt{I1}))\ s \\
+\\
+  &\mathcal{T} : Declaration -> Table -> Table && \\
+  &\cmp{T}{C1, C2}t &&= \cmp{T}{C2}\ (\cmp{T}{C1}\ t) \\
+  &\cmp{T}{I Ty}t &&= tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
 \end{alignat*}
 
 \newpage
@@ -134,13 +141,13 @@ Order of preference:
 \begin{grammar}
   <Program> := <Declaration>;
 
-  <Declaration> := <Declaration>; <Declaration> | <Create>
+  <Declaration> := <Declaration>; <Declaration> | <Create> | <Alter> | <Drop>
 
-  <Create> := create table <Identifier> ( <Column> )
+  <Create> := \lit*{create table} <Identifier> ( <Column> )
 
   <Column> := <Column>, <Column> | <Identifier> <Type>
 
-  <Type> := integer | boolean
+  <Type> := \lit*{integer} | \lit*{boolean}
 \end{grammar}
 
 \section{Semantic Domains}
@@ -163,79 +170,71 @@ Order of preference:
   tableChange &= \lambda i. \lambda ty. \lambda ta. [ i \mapsto ty ]ta
 \end{align*}
 
-\section{Valuation Functions}
-
-\begin{alignat*}{2}
-  &\delta \in \{-, +, \eta \} &&\\
-  &\compsymbol : Differential -> Schema &&-> Schema \\
-  &\comp{D;}{}^{\delta}s &&= \comp{D}{}^{\delta}\ s \\
-  &\comp{D1;D2}{}^{\delta}s &&= \lambda s.\comp{D2}{}^{\delta}\ (\comp{D1}{}^{\delta}\ s) \\
-  &\comp{create table I ( C )}{}^{-}s &&= \lambda s. schemaChange\ \mathtt{I}\ \bot\ s \\
-  &\comp{create table I ( C )}{}^{+}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{}\ table)\ s \\
-  &\comp{create table I ( C )}{}{}^{\eta}s &&= \lambda s. schemaChange\ \mathtt{I}\ (\comp{C}{} (s\ \mathtt{I}))\ s\\
-  &\comp{C1, C2}{}^{\delta}t &&= \lambda t.\comp{C2}{}^{\delta}\ (\comp{C1}{}^{\delta}\ t) \\
-  &\comp{I Ty}{}^{-}t &&= \lambda t.tableChange\ \mathtt{I}\ \bot\ t \\
-  &\comp{I Ty}{}^{+}t &&= \lambda t.tableChange\ \mathtt{I}\ \mathtt{Ty}\ t \\
-  &\comp{I Ty}{}^{\eta}t &&= \lambda t. t \\
-\end{alignat*}
-
-\section{Syntactic Domains}
-\begin{align*}
-  C &: Column \\
-  D &: Declaration \\
-  I &: Identifier \\
-  P &: Program \\
-  Ta &: Table \\
-  Ty &: Type
-\end{align*}
-
-\section{Production Rules}
-\begin{grammar}
-  <Program> := <Declaration>;
-
-  <Declaration> := <Declaration>; <Declaration> | <Create>
-
-  <Create> := create table <Identifier> ( <Column> )
-
-  <Column> := <Column>, <Column> | <Identifier> <Type>
-
-  <Type> := integer | boolean
-\end{grammar}
-
-\section{Semantic Domains}
-\begin{align*}
-  Schema &: S \\
-  Relation &: R \\
-\end{align*}
-
-\section{Semantic Functions}
-\begin{align*}
-  schema &: Schema \\
-  schema &= \langle \rangle \\
-   \\
-  relation &: Identifier -> Tuple -> Relation \\
-  relation&\ I\ = I()
-\end{align*}
+\newpage
 
 \section{Valuation Functions}
-
-TODO how is \verb|create ; create| or \verb| drop; drop| for the same identifier handled if there should be a direct mapping
 
 \begin{alignat*}{2}
   &\delta \in \{-, +, \eta \} &&\\
   &\mathcal{S} : Differential -> Schema -> &&Schema \\
-  &\cmp{S}{D;}^{\delta}s &&= \cmp{S}{D}^{\delta}\ s \\
-  &\cmp{S}{D1;D2}^{\delta}s &&= \cmp{S}{D2}^{\delta}\ (\cmp{S}{D1}^{\delta}\ s) \\
-  &\cmp{S}{create table I ( C )}^{-}s &&= s \backslash \langle r_{\mathtt{I}}\rangle \\
-  &\cmp{S}{create table I ( C )}^{+}s &&= s \cup \langle \cmp{R}{C}\ (relation\ \mathtt{I})\rangle \\
-  &\cmp{S}{create table I ( C )}^{\eta}s &&= s \backslash \langle r_{\mathtt{I}}\rangle \cup \langle \cmp{R}{C}^{\eta}\ r_{\mathtt{I}}\rangle \\
-  \\
-  &\marhcal{R} : Differential -> Relation -> && Relation \\
-  &\cmp{R}{C1, C2}{}^{\delra}r &&= \cmp{R}{C2}^{\delta}\ (\cmp{R}{C1}^{\delta}\ r) \\
-  &\cmp{R}{I Ry}^{-}r &&= \lambda r.rableChange\ \marhrr{I}\ \bor\ r \\
-  &\cmp{R}{I Ry}^{+}r &&= \lambda r.rableChange\ \marhrr{I}\ \marhrr{Ry}\ r \\
-  &\cmp{R}{I Ry}^{\era}r &&= \lambda r. r \\
+  &\cmp{S}{D;}^{\delta}s &&= \cmp{T}{D}^{\delta}\ s \\
+  &\cmp{S}{D1;D2}^{\delta}s &&= \cmp{T}{D2}^{\delta}\ (\cmp{T}{D1}^{\delta}\ s) \\
+  &\cmp{S}{create table I ( C )}^{-}s &&= schemaChange\ \mathtt{I}\ \bot\ s\\
+  &\cmp{S}{create table I ( C )}^{+}s &&= schemaChange\ \mathtt{I}\ (\cmp{T}{C}\ table) \ s \\
+  &\cmp{S}{create table I ( C )}^{\eta}s &&= schemaChange\ \mathtt{I}\ (\cmp{T}{C}\ (s\ \mathtt{I})) \\
+\\
+  &\mathcal{T} : Differential -> Table ->&& Table\\
+  &\cmp{T}{C1, C2}^{\delta}t &&= \cmp{T}{C2}^{\delta}\ (\cmp{T}{C1}^{\delta}\ t) \\
+  &\cmp{T}{I Ty}^{-}t &&= tableChange\ \mathtt{I}\ \bot\ t\\
+  &\cmp{T}{I Ty}^{+}t &&= tableChange\ \mathtt{I}\ \mathtt{Ty}\ t\\
+  &\cmp{T}{I Ty}^{\eta}t &&= t \\
 \end{alignat*}
+
+\begin{description}
+  \item Looking at this makes me wonder if all descriptive declarative languages boil down to tree manip. Maybe this is just a property of languages in general?
+
+  \item \textbf{TODO} how to handle \lit*{create ; create} or \lit*{drop; drop} for the same identifier
+\end{description}
+
+\newpage
+
+\section{Alternate Approach}
+\begin{align*}
+  schema &: Schema \\
+  schema &= \emptyset \\
+   \\
+  relation &: Identifier -> Tuple -> Relation \\
+  relation&\ I\ = I\emptyset
+\end{align*}
+
+\begin{alignat*}{2}
+  &\delta \in \{-, +, \eta \} &&\\
+  &\mathcal{S} : Differential -> Schema -> &&Schema \\
+  &\cmp{S}{D;}^{\delta}S &&= \cmp{S}{D}^{\delta}\ S \\
+  &\cmp{S}{D1;D2}^{\delta}S &&= \cmp{S}{D2}^{\delta}\ (\cmp{S}{D1}^{\delta}\ S) \\
+  &\cmp{S}{create table I ( C )}^{-}S &&= S\, \backslash \langle r_{\mathtt{I}}\rangle \\
+  &\cmp{S}{create table I ( C )}^{+}S &&= S^{\frown}\langle \cmp{R}{C}\ (relation\ \mathtt{I})\rangle \\
+  &\cmp{S}{create table I ( C )}^{\eta}S &&= S\, \backslash \langle r_{\mathtt{I}}\rangle^{\frown} \langle \cmp{R}{C}^{\eta}\ r_{\mathtt{I}}\rangle \\
+  \\
+  &\mathcal{R} : Differential -> Relation -> && Relation \\
+  &\cmp{R}{C1, C2}^{\delra}r &&= \cmp{R}{C2}^{\delta}\ (\cmp{R}{C1}^{\delta}\ r) \\
+  &\cmp{R}{I Ry}^{-}r &&= r \backslash (\mathtt{I}) \\
+  &\cmp{R}{I Ry}^{+}r &&= r^{\frown} (I) \\
+  &\cmp{R}{I Ry}^{\era}r &&= r
+\end{alignat*}
+
+\newpage
+
+\section{Problems Solved}
+
+\begin{enumerate}
+  \item \lit*{create X if exists ... ; create X if exists...} as a no-op
+  \item \lit*{create} or \lit*{drop} on missing identifier
+  \item failing midway through a DDL execution
+  \item large table updates, e.g. adding two columns can be a create/swap
+\end{enumerate}
+
+\newpage
 
 \bibliographystyle{plain}
 \bibliography{ctm}
