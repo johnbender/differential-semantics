@@ -20,9 +20,9 @@
 
 \section{Abstract}
 
-Roy and Haridi \cite{RoyH2004} divide declarative languages in to two major groups based on expressive power: descriptive and programmable. In particular, descriptive declarative languages are characterized by the their limited expressive power. Indeed, languages that might otherwise be purely descriptive (e.g. SQL DDL) must be augmented with programmable declarative elements to describe anything beyond the initial system state.
+Roy and Haridi \cite{RoyH2004} divide declarative languages in to two major groups based on expressive power: descriptive and programmable. In particular, descriptive declarative languages are characterized by the their limited expressive power. Indeed, languages like SQL DDL that might otherwise be purely descriptive are augmented with programmable declarative elements and even their descriptive declarative elements are dependent on declaration order.
 
-We believe that the purely descriptive form is sufficiently expressive in many cases given additional information about syntactic change that is readily available in modern programming environments. To leverage that information, we develop an extension to traditional denotational semantics that supports meaning for changes in syntax. With that extension we construct a denotational semantics for standardized SQL DDL and show that it is possible to eliminate several of its non-descriptive features. Finally, we construct an adapter for an existing implementation.
+We believe that the purely descriptive form is sufficiently expressive in many cases given additional information about syntactic change that is readily available in modern programming environments. To leverage that information, we develop an extension to traditional denotational semantics that supports meaning for changes in syntax. With that, we construct a denotational semantics for standardized SQL DDL and show that it is possible to eliminate several of its non-descriptive features including statement order dependency. We examine the results of eliminating those features on several large database schema definitions over time and construct an adapter for a specific popular open source SQL implementation.
 
 \begin{description}
   \item[eliminate unnecessary features] Show equivalence?
@@ -41,6 +41,8 @@ Order of preference:
     This sounds bi-directional, but that depends on the system. The syntax should determine the system state at interpretation time. It might be that other processes alter the state after that.
 
     Are things like the implementation of finding the difference between versions of the syntax unimportant for the theorem?
+
+    Should be order independent, because part of the issue with reasoning about large DDL scripts is they are top to bottom order dependent. Not sure how to roll this in to the theorem.
 
     \vspace{0.5cm}
 
@@ -83,7 +85,7 @@ Order of preference:
 
   <Column> := <Column>, <Column> | <Identifier> <Type>
 
-  <Alter> := \lit*{alter table} <Identifier> \lit*{add} <Identifier> <Type>
+  <Alter> n:= \lit*{alter table} <Identifier> \lit*{add} <Identifier> <Type>
            \alt \lit*{alter table} <Identifier> \lit*{drop} <Identifier>
 
   <Type> := \lit*{integer} | \lit*{boolean}
@@ -229,9 +231,45 @@ Order of preference:
 
 \begin{enumerate}
   \item \lit*{create X if exists ... ; create X if exists...} as a no-op
-  \item \lit*{create} or \lit*{drop} on missing identifier
+  \item \lit*{create} or \lit*{drop} on existing/missing identifier
   \item failing midway through a DDL execution
   \item large table updates, e.g. adding two columns can be a create/swap
+  \item analysis becomes easier. Might otherwise require simulation
+  \item analysis can determine type conversion issues http://www.postgresql.org/docs/9.3/static/ddl-alter.html#AEN2787
+  \item analysis can catch integrity constraint issues/failures?
+  \item triplicate of all DDL
+  \item detect change of column name order without change of selected columns in create table as
+\end{enumerate}
+
+\section{Notes}
+
+ \begin{enumerate}
+  \item Schema evolution issues are most often handled after the new schema is defined. That is tools like PRISM analyze the new schema and then determine how to get there with the data/queries etc. If the newly defined schema is flawed in the first place these tools are of little value.
+  \item Comparison of schemas from large and complex databases before and after with differential semantics.
+  \item Schema history is trivial to track using source control.
+  \item There appears to be two parts to this, static analysis and differential semantics. They facilitate each other, order dependency graph is static analysis and the reduced syntax comes from differential semantics
+  \item is there some way to characterize how the changes in the declarative syntax eliminate the other parts of the language more generally? How do you classify that as an addition of expressive power?
+\end{enumerate}
+
+\section{Possible Issues}
+
+\begin{enumerate}
+  \item line level merge conflicts can be deceptive/destructive, not a problem with sequential alters and drops
+  \item do schema qualifier changes constitute a move or a copy?
+  \item \lit*{create table as ...} changes may be data destructive
+  \item \lit*{create table as ...} drop and recreate? remove data that doesn't match?
+  \item \lit*{create table as ...} defining the semantics for data removal requires query inversion
+  \item order matters \lit*{create table foo ...; create table as select * from foo ...} will work \lit*{create table as select * from foo; create table foo ...; } won't
+  \item foreign key constraints are order and data dependent (DML has to be right when adding constraints)
+  \item take no action unless all updates will succeed -> well defined declarative syntax does not go wrong? Handled by transactions in some DBs (postgres), still requires system resources (possibly a lot in some cases) before rollback if failure comes late)
+  \item triggers might prevent DDL updates
+\end{enumerate}
+
+\section{Order}
+
+\begin{enumerate}
+  \item order should be unimportant in a declarative language
+  \item reconciling existing system state should be part of the runtime
 \end{enumerate}
 
 \newpage
