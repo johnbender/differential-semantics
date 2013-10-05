@@ -243,15 +243,18 @@ Order of preference:
 
 \section{Notes}
 
- \begin{enumerate}
+\subsection{General}
+
+\begin{enumerate}
   \item Schema evolution issues are most often handled after the new schema is defined. That is tools like PRISM analyze the new schema and then determine how to get there with the data/queries etc. If the newly defined schema is flawed in the first place these tools are of little value.
   \item Comparison of schemas from large and complex databases before and after with differential semantics.
   \item Schema history is trivial to track using source control.
   \item There appears to be two parts to this, static analysis and differential semantics. They facilitate each other, order dependency graph is static analysis and the reduced syntax comes from differential semantics
   \item is there some way to characterize how the changes in the declarative syntax eliminate the other parts of the language more generally? How do you classify that as an addition of expressive power?
+  \item take no action unless all updates will succeed -> well defined declarative syntax does not go wrong? Handled by transactions in some DBs (postgres), still requires system resources (possibly a lot in some cases) before rollback if failure comes late)
 \end{enumerate}
 
-\section{Possible Issues}
+\subsection{Possible Issues}
 
 \begin{enumerate}
   \item line level merge conflicts can be deceptive/destructive, not a problem with sequential alters and drops
@@ -261,15 +264,40 @@ Order of preference:
   \item \lit*{create table as ...} defining the semantics for data removal requires query inversion
   \item order matters \lit*{create table foo ...; create table as select * from foo ...} will work \lit*{create table as select * from foo; create table foo ...; } won't
   \item foreign key constraints are order and data dependent (DML has to be right when adding constraints)
-  \item take no action unless all updates will succeed -> well defined declarative syntax does not go wrong? Handled by transactions in some DBs (postgres), still requires system resources (possibly a lot in some cases) before rollback if failure comes late)
   \item triggers might prevent DDL updates
 \end{enumerate}
 
-\section{Order}
+\subsection{Order/State}
 
 \begin{enumerate}
   \item order should be unimportant in a declarative language
-  \item reconciling existing system state should be part of the runtime
+  \item any expectations about the existing state should be handled (eg foreign key constraints require certain data)
+\end{enumerate}
+
+\subsection{Static Analysis}
+\begin{enumerate}
+  \item dml insertions into table must respect data constraints (eg, not null, types)
+  \item historical information constraints (eg, if a column is/has always been not null the data will always satisfy the constraint)
+  \item build a set of constraints for the tables, check DML statments (data later still has value even if changing)
+  \item identity dependencies
+  \item index table dependencies
+  \item referential constraint dependencies
+  \item column constraint dependencies (foo int check foo > bar ==> foo depends on bar)
+  \item as column constraints change over time they might become incompatible
+  \item constraint solving over time, temporal understanding of constraints
+  \item certain types of constraints suggest certain types of index bitmap vs normal (eg, foo int CHECK (price > 0 and price < 10))
+  \item constraints could allow for fast verification of data (eg, foo int CHECK (price > 0 and price =< 10 + unique) ==> check the table for 10 items) on foreign key checks
+  \item expansion (weakening?) of constraints is sure to be ok, strengthening may not be
+  \item redundant constraints
+  \item pk => unique + not null, many columns is more complex
+  \item delete restrictions/cascades vs other constraints?
+  \item constraint relationship with queries for redundant, unnecessary, or impossible queries
+  \item \lit*{insert into select ...} and \lit*{create table as ... } will satisfy the constraints of the table being selected from, even if the table doesn't require them
+  \item \lit*{insert into select ...} data set should satisfy constraints of table definition
+  \item \lit*{create index ...} predicates (postgres) should satisfy constraints
+  \item constraint solving can produce different answers for the existing data vs the new schema, (eg, constraint removed in current schema, still constrained on existing data, reliance on existing data must reference old constraint, reliance on new schema must reference new constraint)
+  \item type mismatch in definition and use of columns
+  \item type mismatch in alteration of columns
 \end{enumerate}
 
 \newpage
