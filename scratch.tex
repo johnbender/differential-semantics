@@ -298,6 +298,47 @@ Order of preference:
   \item constraint solving can produce different answers for the existing data vs the new schema, (eg, constraint removed in current schema, still constrained on existing data, reliance on existing data must reference old constraint, reliance on new schema must reference new constraint)
   \item type mismatch in definition and use of columns
   \item type mismatch in alteration of columns
+  \item type width as a subtype relationship?
+\end{enumerate}
+
+\subsection{Constraints/Types}
+
+\subsubsection{Type definitions}
+
+\begin{enumerate}
+  \item columns and their types are type definitions
+  \item column/table constraints are dependent type constraints
+  \item referential constraints are dependent type constraints from external sources
+  \item constraints are a weak form a schema modeling
+\end{enumerate}
+
+\subsubsection{Type checks}
+
+\begin{enumerate}
+  \item columns references must respect type constraints
+  \item where/having/order clauses should respect type/data constraints
+  \item join results should respect proxied referential data constraints
+  \item column type alterations must/should respect type constraints
+\end{enumerate}
+
+\subsubsection{Value}
+\begin{enumerate}
+  \item Prevent type mismatch
+    \begin{enumerate}
+      \item selection, \lit*{... LIKE ``foo'' ...} on \lit*{int} column
+      \item projection, \lit*{ ... lower(column_name) ... } on \lit*{int} column
+      \item alteration, \lit*{ ALTER TABLE ... TYPE numeric(10,2);} on \lit*{text} column
+    \end{enumerate}
+  \item Prevent uselessness
+    \begin{enumerate}
+      \item e.g. selection criteria fall outside table constraints.
+      \item projection, \lit*{ ... lower(column_name) ... } on \lit*{int} column
+    \end{enumerate}
+\end{enumerate}
+
+\subsubsection{Questions}
+\begin{enumerate}
+  \item How do you concat two types? See paper from Jens?
 \end{enumerate}
 
 \newpage
