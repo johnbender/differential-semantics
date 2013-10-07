@@ -1,0 +1,147 @@
+\documentclass[12pt]{article}
+\usepackage{bbold}
+\usepackage{semantic}
+\usepackage{mathtools}
+\usepackage{syntax}
+\usepackage{xstring}
+\usepackage{trfrac}
+
+\renewcommand{\syntleft}{\normalfont\itshape}
+\renewcommand{\syntright}{}
+
+\newcommand{\cmp}[2]{
+  \mathcal{#1}|[ \mathtt{ \StrSubstitute{#2}{ }{\ } } |]
+}
+
+\newcommand{\syn}[1]{
+  \synt{\textbf{#1}}
+}
+
+\begin{document}
+\section{Type Rules}
+\begin{equation*}
+  \trfrac[Attributes]{
+    \Gamma \vdash R(a_1 ,\ldots,a_n) \qquad \Gamma \vdash a_1 : \tau_1,\ \ldots,\ a_n : \tau_n
+  }{
+    \Gamma \vdash R : \{a_1 : \tau_1,\ldots,a_n : \tau_n\}
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[Label]{
+    \Gamma \vdash R : \{a_1 : \tau_1,\ldots,a_n : \tau_n\}
+  }{
+    \Gamma \vdash R : \vec{\tau}
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[\ Select]{
+    \Gamma \vdash R : \vec{\tau_1}
+  }{
+    \Gamma \vdash \sigma_{\varphi}(R) : (\vec{\tau_1} \land \varphi)
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[\ Project*]{
+    \Gamma \vdash R : \vec{\tau_1} \qquad \Gamma \vdash \pi_{a_1,\ldots,a_m}(R) : \vec{\tau_2} \qquad \mathbf{TODO} \\
+  }{
+    \Gamma \vdash \vec{\tau_1} \le \vec{\tau_2}
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[\ Join*]{
+    \Gamma \vdash R : \vec{\tau_1},\ S : \vec{\tau_2}  \qquad \mathbf{TODO} \\
+  }{
+   \Gamma \vdash  R \bowtie S : \vec{\tau_1} \cup \vec{\tau_2}
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[\ Subtype*]{
+    \Gamma \vdash R : \vec{\tau_1},\ S : \vec{\tau_2} \qquad \mathbf{TODO}
+  }{
+    \Gamma \vdash \vec{\tau_1} \le \vec{\tau_2}
+  }
+\end{equation*}
+
+\section{Notes}
+
+\subsection{TODO}
+\begin{enumerate}
+  \item the Project rule the a's cannot convert types, create columns by conversions. Duped columns still a subtype?
+  \item the subtype rule has to account for columns, column types, and constraints. That is, a \lit*{select} or \lit*{insert} should type check as a super type of it's target table
+  \item the join rule has to account for constraints
+\end{enumerate}
+
+\subsection{Type definitions}
+
+\begin{enumerate}
+  \item columns and their types are type definitions
+  \item column/table constraints are type constraints
+  \item referential constraints are constraints from external sources
+  \item constraints are a weak form a schema modeling
+\end{enumerate}
+
+\subsection{Type checks}
+
+\begin{enumerate}
+  \item columns references must respect type constraints
+  \item where/having/order clauses should respect type/data constraints, it's alright to select and get no tuples, it's not alright to select in a way that cannot return tuples
+  \item join results should respect proxied referential data constraints
+  \item column type alterations must/should respect type constraints
+\end{enumerate}
+
+\subsection{Value}
+\begin{enumerate}
+  \item Prevent type mismatch
+    \begin{enumerate}
+      \item selection, \lit*{... LIKE `foo' ...} on \lit*{int} column
+      \item projection, \lit*{ ... lower(column_name) ... } on \lit*{int} column
+      \item alteration, \lit*{ ALTER TABLE ... TYPE numeric(10,2);} on \lit*{text} column
+    \end{enumerate}
+  \item Prevent uselessness
+    \begin{enumerate}
+      \item e.g. selection criteria fall outside table constraints, especially inserts/creates
+    \end{enumerate}
+\end{enumerate}
+
+\subsection{Questions}
+\begin{enumerate}
+  \item how do you handle type conversions in the subtyping relation?
+  \item In the Join type rule how would one union the constraints?
+\end{enumerate}
+
+\subsection{Brainstorm}
+\begin{enumerate}
+  \item dml insertions into table must respect data constraints (eg, not null, types)
+  \item historical information constraints (eg, if a column is/has always been not null the data will always satisfy the constraint)
+  \item build a set of constraints for the tables, check DML statments (data later still has value even if changing)
+  \item identity dependencies
+  \item index table dependencies
+  \item referential constraint dependencies
+  \item column constraint dependencies, e.g. \lit*{foo int check foo > bar} means foo depends on bar
+  \item as column constraints change over time they might become incompatible
+  \item constraint solving over time, temporal understanding of constraints
+  \item certain types of constraints suggest certain types of index bitmap vs normal (eg, \lit*{foo int CHECK (price > 0 and price < 10)})
+  \item constraints could allow for fast verification of data (eg, foo int CHECK (\lit*{price > 0 and price =< 10} + unique) means check the table for 10 items) on foreign key checks
+  \item expansion (weakening?) of constraints is sure to be ok, strengthening may not be
+  \item redundant constraints
+  \item pk is unique + not null, many columns is more complex
+  \item delete restrictions/cascades vs other constraints?
+  \item constraint relationship with queries for redundant, unnecessary, or impossible queries
+  \item \lit*{insert into select ...} and \lit*{create table as ... } will satisfy the constraints of the table being selected from, even if the table doesn't require them
+  \item \lit*{insert into select ...} data set should satisfy constraints of table definition
+  \item \lit*{create index ...} predicates (postgres) should satisfy constraints
+  \item constraint solving can produce different answers for the existing data vs the new schema, (eg, constraint removed in current schema, still constrained on existing data, reliance on existing data must reference old constraint, reliance on new schema must reference new constraint)
+  \item type mismatch in definition and use of columns
+  \item type mismatch in alteration of columns
+  \item type width as a subtype relationship?
+  \item what is the relationship between view/create as where statement constraints and regular table constraints?
+  \item are constraints other than not null / default used?
+  \item can table definitions be modeled as projects/selections/renames on the relation of all possible field types (or in this case bottom)?
+\end{enumerate}
+
+\end{document}

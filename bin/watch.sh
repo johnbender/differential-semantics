@@ -7,8 +7,10 @@ build(){
 
 # build once by default
 build scratch.tex scratch.aux
+build analysis.tex
 
 # watch for alterations
-while inotifywait scratch.tex; do
+while inotifywait *.tex; do
 	build scratch.tex scratch.aux
+  build analysis.tex
 done
