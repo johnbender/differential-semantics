@@ -299,6 +299,8 @@ Order of preference:
   \item type mismatch in definition and use of columns
   \item type mismatch in alteration of columns
   \item type width as a subtype relationship?
+  \item what is the relationship between view/create as where statement constraints and regular table constraints?
+  \item are constraints other than not null / default used?
 \end{enumerate}
 
 \subsection{Constraints/Types}
@@ -331,14 +333,13 @@ Order of preference:
     \end{enumerate}
   \item Prevent uselessness
     \begin{enumerate}
-      \item e.g. selection criteria fall outside table constraints.
-      \item projection, \lit*{ ... lower(column_name) ... } on \lit*{int} column
+      \item e.g. selection criteria fall outside table constraints, especially inserts/creates
     \end{enumerate}
 \end{enumerate}
 
 \subsubsection{Questions}
 \begin{enumerate}
-  \item How do you concat two types? See paper from Jens?
+  \item How do you concat two types in a join? See paper from Jens?
 \end{enumerate}
 
 \newpage
