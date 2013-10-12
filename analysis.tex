@@ -141,7 +141,47 @@
   \item type width as a subtype relationship?
   \item what is the relationship between view/create as where statement constraints and regular table constraints?
   \item are constraints other than not null / default used?
-  \item can table definitions be modeled as projects/selections/renames on the relation of all possible field types (or in this case bottom)?
+  \item can table definitions be modeled as projects/selections/renames on the relation of all possible field types? bottom?
+\end{enumerate}
+
+\newpage
+\section{Recursive Query Non-Termination}
+
+\subsection{Different}
+\begin{enumerate}
+  \item Showing termination or non-termination is different for recursive queries because a all, or a significant portion of possible inputs are known
+  \item Constraints on the table might support a proof
+  \item Triggers could prevent cycles
+  \item Does certain data make the semantics of a query strongly normalizing? Can a language be semantics be affected by data? Lisp?
+  \item Assume integers for pk, fk, add them and if you get a well order then it should
+    terminate. Because he pk should always be unique, the only way for them to be
+    a cycle is if the pk and fk are swapped inducing a cycle \\
+
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      1 & _ & 1 \\
+      2 & 1 & 3 \\
+      3 & 1 & 4 \\
+      4 & 2 & 6 \\
+      \hline
+    \end{tabular}
+
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      1 & _ & 1 \\
+      2 & 4 & 6 \\
+      3 & 1 & 4 \\
+      4 & 2 & 6 \\
+      \hline
+    \end{tabular} \\
+
+    Uniqueness constraint on the sum of the pk and fk?
+  \item The above suggests that tuples in a relation are the states of a recursive query.
+
 \end{enumerate}
 
 \end{document}
