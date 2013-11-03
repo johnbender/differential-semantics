@@ -147,15 +147,13 @@
 \newpage
 \section{Recursive Query Non-Termination}
 
-\subsection{Different}
+\subsection{Brainstorm}
 \begin{enumerate}
-  \item Showing termination or non-termination is different for recursive queries because a all, or a significant portion of possible inputs are known
+  \item Showing termination or non-termination is different for recursive queries because all, or a significant portion of possible, inputs are known
   \item Constraints on the table might support a proof
   \item Triggers could prevent cycles
   \item Does certain data make the semantics of a query strongly normalizing? Can a language be semantics be affected by data? Lisp?
-  \item Assume integers for pk, fk, add them and if you get a well order then it should
-    terminate. Because he pk should always be unique, the only way for them to be
-    a cycle is if the pk and fk are swapped inducing a cycle \\
+  \item \textbf{ONLY works for direct cycles} Assume integers for pk, fk, add them and if you get a well order on the sum and $>$ then it should terminate. Because the pk should always be unique, the only way for them to be a cycle is if the pk and fk are swapped inducing a cycle \\
 
     \begin{tabular}{| l | c || r |}
       \hline
@@ -179,9 +177,94 @@
       \hline
     \end{tabular} \\
 
-    Uniqueness constraint on the sum of the pk and fk?
-  \item The above suggests that tuples in a relation are the states of a recursive query.
+  \item Uniqueness constraint on the sum of the pk and fk? And how does this map to a constrain on the program?
+  \item The above suggests that tuples in a relation are the states of a recursive query?
+  \item Map any pk, fk into an integer with a hashing algo
+  \item reducing all cycles in all relations to this problem would provide a general solution to guaranteeing termination on a finite set of data.
+  \item in the case of some convoluted query that makes use of cycles can you consider the alternate termination check as part of the primary key?
+  \item what is the transition relation for a given recursive query?
+  \item prove that the query is vulnerable to cycles, prove no cycles in the data
+  \item Cyclic Graphs: \\
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      1 & 4 & 5 \\
+      2 & 1 & 3 \\
+      3 & 2 & 5 \\
+      4 & 3 & 7 \\
+      \hline
+    \end{tabular} \\
 
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      1 & 8 & 7 \\
+      2 & 1 & 3 \\
+      3 & 2 & 5 \\
+      4 & 3 & 7 \\
+      5 & 4 & 9 \\
+      6 & 5 & 11 \\
+      7 & 6 & 13 \\
+      8 & 3 & 11 \\
+      \hline
+    \end{tabular} \\
+  \item Unordered (pk/fk hashing) \\ \\
+
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      1 & 8 & 7 \\
+      2 & 4 & 6 \\
+      3 & 2 & 5 \\
+      4 & 6 & 10 \\
+      5 & _ & 5 \\
+      6 & 5 & 11 \\
+      7 & 6 & 13 \\
+      8 & 3 & 11 \\
+      \hline
+    \end{tabular} \\
+
+    \begin{tabular}{| l | c || r |}
+      \hline
+      Pk & Fk & Sum \\
+      \hline
+      5 & _ & 5 \\
+      6 & 5 & 11 \\
+      4 & 6 & 10 \\
+      7 & 6 & 13 \\
+      2 & 4 & 6 \\
+      3 & 2 & 5 \\
+      8 & 3 & 11 \\
+      1 & 8 & 7 \\
+      \hline
+    \end{tabular} \\
+
+    \item can we come up with an algo to automatically generate a ranking function for certain recursive queries? Eg, for queries that explicitly prevent cycles
+
+    \item harder because there's nothing to guarantee an empty set in most queries like there is to guarantee that a variable is decreasing
+    \item easier because the existing data is available
+    \item boils down to the data set and establishing a ranking function for it?
+    \item given the cycle detection example, how does that map to a ranking function?
+    \item $[1,2,3 ... 4] \rightarrow [1,2,3 ... 4, 1]$ Assume that the addition of array elements in monotonic, what is the operation that will break monotonicity for a duplicate element?
+    \begin{enumerate}
+      \item size of the set should always increase \\
+        \verb|a = {1,2,3,...,4}; b = {1,2,3,...,4,1};| \\
+        \verb|count(a) =/= count(b);|
+    \end{enumerate}
+
+  \item any property from recursive query ref involved in a join/$=$ from the table should be involved in a termination condition (very generally the pk and fk)
+  \item must consider \verb|union| and \verb|union all|
+ \end{enumerate}
+
+\newpage
+\section{Recursive Query Liveness}
+
+\subsection{Brainstorm}
+\begin{enumerate}
+  \item nothing external to the query should prevent the query from having the liveness property of returning the results. That is, only data and the query itself should prevent the liveness property.
 \end{enumerate}
 
 \end{document}
