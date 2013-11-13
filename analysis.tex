@@ -19,51 +19,48 @@
 
 \begin{document}
 \section{Type Rules}
-\begin{equation*}
-  \trfrac[Attributes]{
-    \Gamma \vdash R(a_1 ,\ldots,a_n) \qquad \Gamma \vdash a_1 : \tau_1,\ \ldots,\ a_n : \tau_n
-  }{
-    \Gamma \vdash R : \{a_1 : \tau_1,\ldots,a_n : \tau_n\}
-  }
-\end{equation*}
 
 \begin{equation*}
-  \trfrac[Label]{
-    \Gamma \vdash R : \{a_1 : \tau_1,\ldots,a_n : \tau_n\}
+  \trfrac[Relation]{
   }{
-    \Gamma \vdash R : \vec{\tau}
+    \Gamma, R.C, R.a_1:\tau_1,\ldots,R.a_n:\tau_n  \vdash R : \{a_1:\tau_1,\ldots,a_n:\tau_n\}\ |\ C
   }
 \end{equation*}
 
 \begin{equation*}
   \trfrac[\ Select]{
-    \Gamma \vdash R : \vec{\tau_1}
+    \Gamma \vdash R : \vec{\tau_1}\ |\ C
   }{
-    \Gamma \vdash \sigma_{\varphi}(R) : (\vec{\tau_1} \land \varphi)
-  }
-\end{equation*}
-
-\begin{equation*}
-  \trfrac[\ Project*]{
-    \Gamma \vdash R : \vec{\tau_1} \qquad \Gamma \vdash \pi_{a_1,\ldots,a_m}(R) : \vec{\tau_2} \qquad \mathbf{TODO} \\
-  }{
-    \Gamma \vdash \vec{\tau_1} \le \vec{\tau_2}
-  }
-\end{equation*}
-
-\begin{equation*}
-  \trfrac[\ Join*]{
-    \Gamma \vdash R : \vec{\tau_1},\ S : \vec{\tau_2}  \qquad \mathbf{TODO} \\
-  }{
-   \Gamma \vdash  R \bowtie S : \vec{\tau_1} \cup \vec{\tau_2}
+    \Gamma \vdash \sigma_{\varphi}(R) : \vec{\tau_1}\ |\ C \cup \{\varphi\}
   }
 \end{equation*}
 
 \begin{equation*}
   \trfrac[\ Subtype*]{
-    \Gamma \vdash R : \vec{\tau_1},\ S : \vec{\tau_2} \qquad \mathbf{TODO}
+    \Gamma \vdash R : \vec{\tau_1}\ |\ C_1
+    \qquad \Gamma \vdash \pi_{a_1,\ldots,a_m}(R) : \vec{\tau_2}\ |\ C_2
   }{
-    \Gamma \vdash \vec{\tau_1} \le \vec{\tau_2}
+    \Gamma \vdash \vec{\tau_1} \le \vec{\tau_2}\ |\ C_1 \cup C_2
+  }
+\end{equation*}
+
+\begin{equation*}
+  \trfrac[\ Project*]{
+    \Gamma \vdash R : \vec{\tau_1}\ |\ C
+    \qquad \vec{\tau_2} = \{ a_1:\tau_1,...,a_m:\tau_m\}
+    \qquad \vec{\tau_2} / \vec{\tau_1} = \emptyset
+  }{
+    \pi_{a_1,\ldots,a_m}(R) : \vec{\tau_2} \cap \vec{\tau_1}\ |\ C
+  }
+\end{equation*}
+
+
+\begin{equation*}
+  \trfrac[\ Join*]{
+    \Gamma \vdash R : \vec{\tau_1}\ |\ C_1
+    \qquad \ S : \vec{\tau_2}\ |\ C_2
+  }{
+   \Gamma \vdash  R \bowtie S : \vec{\tau_1} \sqcup \vec{\tau_2}\ |\ C_1 \cup C_2
   }
 \end{equation*}
 
