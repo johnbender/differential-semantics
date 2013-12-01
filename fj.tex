@@ -1,0 +1,123 @@
+\documentclass[12pt]{article}
+\usepackage{bbold}
+\usepackage{semantic}
+\usepackage{mathtools}
+\usepackage{syntax}
+\usepackage{xstring}
+\usepackage{trfrac}
+\usepackage{listings}
+\usepackage{color}
+
+
+
+\begin{document}
+\lstdefinelanguage{diff}{
+  morecomment=[f][\color{blue}]{@@},     % group identifier
+  morecomment=[f][\color{red}]-,         % deleted lines
+  morecomment=[f][\color{green}]+,       % added lines
+  morecomment=[f][\color{magenta}]{---}, % Diff header lines (must appear after +,-)
+  morecomment=[f][\color{magenta}]{+++},
+}
+
+\lstset{
+  language=Java,
+  basicstyle=\ttfamily
+}
+
+\section{Easy Examples}
+
+\begin{enumerate}
+  \item ``Alpha equivalence'', change from \texttt{bak} to \texttt{bing}
+
+    \lstinputlisting[language=diff]{code/alpha.diff}
+
+  \item External equivalence, body of \texttt{baz} adds 10
+
+    \lstinputlisting[language=diff]{code/external.diff}
+
+  \item Class body changes,
+
+    \lstinputlisting[language=diff]{code/subclass.diff}
+
+\newpage
+
+\section{Other Examples}
+
+\begin{enumerate}
+  \item Class Reference addition, \texttt{Qux} instance returned. To avoid recompilation \texttt{Qux} would have to type check. That is it would have to exist and be a subtype of \texttt{int} in the old class table. If \texttt{Qux} does not yet exist then local only modifications aren't possible, because \texttt{Qux} has to be compiled before we can typecheck.
+
+    \lstinputlisting[language=diff]{code/new-ref.diff}
+\end{enumerate}
+
+\section{Eval Derivations to Eval Derivations}
+
+\begin{enumerate}
+  \item assumes type c
+\end{enumerate}
+
+$\mathtt{(Pair)(new\ Pair(new\ Pair(new\ A(),\ new\ B()),\ new\ B()).first)}$
+\vspace{-0.1cm}
+\begin{equation*}
+  \trfrac[E-PROJNEW]{
+    \trfrac[E-CASTNEW]{
+      \mathtt{(new\ Pair(new\ A(),\ new\ B()))}
+    }{
+      \mathtt{(Pair)(new\ Pair(new\ A(),\ new\ B()))}
+    }
+  }{
+    \mathtt{(Pair)(new\ Pair(new\ Pair(new\ A(),\ new\ B()),\ new\ B()).first)}
+  }
+\end{equation*}
+
+\vspace{0.4cm}
+
+$\mathtt{(Pair)(new\ Pair(new\ Pair(new\ C(),\ new\ B()),\ new\ B()).first)}$
+\vspace{-0.1cm}
+\begin{equation*}
+  \trfrac[E-PROJNEW]{
+    \trfrac[E-CASTNEW]{
+      \mathtt{(new\ Pair(new\ C(),\ new\ B()))}
+    }{
+      \mathtt{(Pair)(new\ Pair(new\ C(),\ new\ B()))}
+    }
+  }{
+    \mathtt{(Pair)(new\ Pair(new\ Pair(new\ C(),\ new\ B()),\ new\ B()).first)}
+  }
+\end{equation*}
+
+\vspace{0.4cm}
+
+$\mathtt{(Pair)(new\ Pair(new\ Pair(new\ A(),\ new\ B()),\ new\ B()))}$
+\vspace{-0.1cm}
+\begin{equation*}
+  \trfrac[E-CASTNEW]{
+    \mathtt{new\ Pair(new\ Pair(new\ A(),\ new\ B()),\ new\ B())}
+  }{
+    \mathtt{(Pair)(new\ Pair(new\ Pair(new\ A(),\ new\ B()),\ new\ B()))}
+  }
+\end{equation*}
+
+
+\section{Notes}
+
+\begin{enumerate}
+  \item Where is the line between acceptable changes and unacceptable? How does it relate to the semantics/type rules of Featherweight Java?
+  \item Consider the types and semantics separately
+
+\end{enumerate}
+
+\section{Ideas}
+
+\begin{enumerate}
+  \item Direct alterations to optimized binary class file to avoid re-JIT
+\end{enumerate}
+
+\section{Issues}
+
+\begin{enumerate}
+  \item Dynamically updating optimized state might be impossible unless transformations can be composed with the differential update
+\end{enumerate}
+
+
+
+\end{document}
