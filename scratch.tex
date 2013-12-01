@@ -4,6 +4,8 @@
 \usepackage{mathtools}
 \usepackage{syntax}
 \usepackage{xstring}
+\usepackage{trfrac}
+\usepackage{listings}
 
 \renewcommand{\syntleft}{\normalfont\itshape}
 \renewcommand{\syntright}{}
@@ -16,7 +18,17 @@
   \synt{\textbf{#1}}
 }
 
+\newcommand{\ul}[1]{
+  \underline{#1}
+}
+
 \begin{document}
+
+\lstset{
+  language=C,
+  basicstyle=\ttfamily
+}
+
 
 \section{Abstract}
 
@@ -27,6 +39,7 @@ We believe that the purely descriptive form is sufficiently expressive in many c
 \begin{description}
   \item[eliminate unnecessary features] Show equivalence?
 \end{description}
+
 
 \section{Candidate Theorems}
 \label{sec:theorems}
@@ -59,6 +72,12 @@ Order of preference:
     Is change of relations a part of relationale algebra? This theorem highlights that whatever the denotations are they must be able to map states to accomodate the changes in syntax.
 
     Existing DDL appears to satisfy this theorem. Alter and drop definitely map system states.
+
+    \vspace{0.5cm}
+
+  \item[Syntax]
+
+
 \end{description}
 
 \section{Syntactic Domains}
@@ -340,6 +359,148 @@ Order of preference:
 \subsubsection{Questions}
 \begin{enumerate}
   \item How do you concat two types in a join? See paper from Jens?
+\end{enumerate}
+
+\newpage
+
+\section{Transformations}
+
+\begin{enumerate}
+  \item Questions
+    \begin{enumerate}
+      \item How can you ``remember'' computation or delay it and then ``cleanup''
+      \item Does applying them one at a time change anything?
+      \item Is there work on program transformation that applies?
+      \item Do monadic computations generally provide checkpoints? Monadic ``loops''?
+      \item Instruction reordering an issue for updates?
+      \item Is Haskell's \texttt{runState} an \texttt{update} equivalent?
+      \item Where does the diff begin end?
+      \item Could side effects force the computation?
+      \item How can you safely do partial updates?
+      \item What can be done without types?
+    \end{enumerate}
+
+  \item Notes
+    \begin{enumerate}
+      \item alpha equivalence is a no-op
+      \item Combining ``in-flight'' updates with checkpoint has value when the developer misplaces/forgets the \texttt{update} or the execution takes to long to reach it.
+      \item Replacing without the update/timeout requirement removes cognitive overhead.
+      \item Prove: handles modules (through let?)
+      \item Prove: same update never applied twice
+      \item Prove: When updates are added to $\Delta$ they always take place before the term is reduced
+      \item Prove: updates only apply to original terms
+      \item Should preserve the language semantics
+      \item A change requires type checking in old and new environment
+    \end{enumerate}
+
+  \item TODO
+    \begin{enumerate}
+      \item Beta equivalence (undecidable)
+      \item $\Delta$ ``cleanup'' for ``unused'' updates
+      \item Type checking
+      \item Reduced/Partially Applied term updates
+      \item Working on impure functions
+    \end{enumerate}
+
+\newpage
+
+  \item Pre-flight Updates
+
+    Simple
+
+    \begin{equation*}
+      (\lambda z.\lambda x.\lambda y.x)^0\ (\lambda x.x)^{10}
+    \end{equation*}
+
+    \begin{equation*}
+      \Delta = \{(\lambda x.\lambda y.x,\
+      \ul{\lambda n}.\lambda x.\lambda y.x\ \ul{n})^{3} \}
+    \end{equation*}
+
+    \begin{equation*}
+      (\lambda z.\lambda x.\lambda y.x)^0\ (\lambda x.x)^{10} \rightarrow
+      (\lambda x.\lambda y.x)^3 \rightarrow
+      (\ul{\lambda n}.\lambda x.\lambda y.x\ \ul{n})^3
+    \end{equation*}
+
+
+    \begin{equation*}
+      \trfrac[E-UpdateLambda]{
+        (\lambda x.t_1, t)^x \in \Delta \qquad \Delta' = \Delta \setminus (\lambda x.t_1, t)^x
+      }{
+        (\lambda x.t_1)^x\ t_2 ->
+        t\ t_2\
+      }
+    \end{equation*}
+
+    \begin{equation*}
+      \trfrac[E-UpdateBody]{
+        (t_1, t)^{x} \in \Delta \qquad \Delta' = \Delta \setminus (t_1, t)^{x}
+      }{
+        (\lambda x.t_1)^{x}\ t_2 ->
+        (\lambda x.t)^{x}\ t_2
+      }
+    \end{equation*}
+
+    \begin{equation*}
+      \trfrac[E-AppBeta]{
+        (\lambda x.t_1,\_), (t_1, \_) \notin \Delta
+      }{
+        (\lambda x.t_1)^{x}\ t_2 ->
+        [x \mapsto t_2]\,t_1^{\;x+3 }
+      }
+    \end{equation*}
+
+    \begin{equation*}
+      \trfrac[E-Update]{
+        \Delta -> \Delta \cup \Delta'
+      }{
+        t -> t
+      }
+    \end{equation*}
+
+  \item Explicit Updates
+
+    \begin{equation*}
+      \trfrac[E-Update]{
+        \Delta -> \Delta \cup \Delta'
+      }{
+        \mathtt{update}\ t -> t
+      }
+    \end{equation*}
+
+  \item Updates for Reduced Terms
+
+    \begin{equation*}
+      \trfrac[E-AppBetaPart]{
+        dom(\langle \ldots \rangle)(\lambda x.\lambda y.t_1,\_) \notin \Delta
+      }{
+        \langle \ldots \rangle(\lambda x.\lambda y.t_1)^{x}\ t_2 ->
+        \langle \ldots, x \mapsto t_2 \rangle(\lambda y.t_1)^{\;x+3 }
+      }
+    \end{equation*}
+
+    \begin{equation*}
+      \trfrac[E-AppBetaSubApp]{
+        (\lambda x.t_1\ t_2,\_) \notin \Delta
+      }{
+         \langle \ldots \rangle (\lambda x.t_1\ t_2)^{x}\ t ->
+         [ \ldots, x \mapsto t ] \,(t_1\ t_2)^{\;x+3 }
+      }
+    \end{equation*}
+
+    \begin{equation*}
+      \trfrac[E-AppBeta]{
+        (\lambda x.var,\_) \notin \Delta
+      }{
+         \langle \ldots \rangle (\lambda x.var)^{x}\ t ->
+         [ \ldots, x \mapsto t] var^{\;x+3 }
+      }
+    \end{equation*}
+
+  \item Pure update example
+    \lstinputlisting[language=C]{code/rewind.c}
+
 \end{enumerate}
 
 \newpage

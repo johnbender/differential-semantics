@@ -1,0 +1,10 @@
+@@ -1,7 +1,7 @@
+ class Foo extends Bar {
+-    private int bing = 0;
++    private int bak = 0;
+
+     int baz() {
+-        return bing;
++        return bak;
+     }
+ }

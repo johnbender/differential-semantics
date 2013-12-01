@@ -1,0 +1,12 @@
+@@ -2,6 +2,10 @@
+     private int bak = 0;
+
+     int baz() {
+-        return bak + 10;
++        return bak + this.bik() + 10;
++    }
++
++    int bik() {
++        return bak - 5;
+     }
+ }

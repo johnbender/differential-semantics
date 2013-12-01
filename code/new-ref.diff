@@ -1,0 +1,8 @@
+@@ -2,6 +2,6 @@
+     private int bing = 0;
+
+     int baz() {
+-        return bing;
++        return new Qux( bing );
+     }
+ }
