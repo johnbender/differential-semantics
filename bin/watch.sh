@@ -1,3 +1,4 @@
+
 build(){
   pdflatex -interaction=nonstopmode $1
   bibtex $2
@@ -6,11 +7,9 @@ build(){
 }
 
 # build once by default
-build scratch.tex scratch.aux
-build analysis.tex
+build $@
 
 # watch for alterations
 while inotifywait *.tex; do
-  build scratch.tex scratch.aux
-  build analysis.tex
+  build $@
 done
